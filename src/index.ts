@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { bootstrap } from 'fastify-decorators';
 import fastifyMysql from '@fastify/mysql';
 import fastifyJWT from '@fastify/jwt';
+import fastifyRedis from '@fastify/redis';
 import config from "@config/index";
 
 const server = Fastify({
@@ -24,6 +25,10 @@ server.register(fastifyMysql, {
   connectionString: `mysql://${mysql.userName}:${mysql.password}@${mysql.host}/${mysql.database}`,
   promise: true,
 })
+
+// register fastify-redis
+const { redis } = config.DB;
+server.register(fastifyRedis, redis)
 
 server.listen({
   port: 3000,

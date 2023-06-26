@@ -9,7 +9,7 @@ import { errRes, md5, sucRes } from '@utils/index';
 const whiteList = ['/login', '/register'];
 
 @Controller({ route: '/' })
-export default class FirstController {
+export default class UserController {
   @Inject(FastifyInstanceToken)
   private instance!: FastifyInstance
 
