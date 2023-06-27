@@ -7,6 +7,8 @@ enum UserError {
   LOGIN_USER_ERROR = 'LOGIN_USER_ERROR',
   // 用户暂未登录
   USER_NOT_LOGIN = 'USER_NOT_LOGIN',
+  // 用户名重复
+  USER_NAME_DUPLICATE = 'USER_NAME_DUPLICATE',
 }
 
 export default UserError;

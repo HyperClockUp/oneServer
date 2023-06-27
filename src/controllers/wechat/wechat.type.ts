@@ -2,3 +2,8 @@
 export type WeChatLoginParams = {
   js_code: string
 }
+
+export type WeChatAssociateParams = {
+  account: string
+  password: string
+}

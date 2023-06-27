@@ -33,7 +33,4 @@ type RequestHandler = (request: FastifyRequest, reply: FastifyReply) => Promise<
 
 type RequestHandlerName<T extends string = string> = `${T}Handler`;
 
-type FastifyRequestError = {
-  code: any;
-  err: Error;
-}
+type FastifyRequestError = Error;
