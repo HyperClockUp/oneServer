@@ -15,6 +15,9 @@ export default class HomeController {
   @GET({ url: "/" })
   async handleHome(request: FastifyRequest, reply: FastifyReply) {
     const token = request.headers["authorization"];
+    if (!token) {
+      return "Hello World!";
+    }
     const data = this.instance.jwt.decode(token!) as any;
     if (!data.user.userName) {
       return "Hello World!";
