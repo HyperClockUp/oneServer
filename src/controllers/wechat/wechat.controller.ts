@@ -4,9 +4,8 @@ import { FastifyRequestError } from '@/types/global';
 import { encryptPassword, errRes, md5, setCookie, sucRes } from '@utils/index';
 import fetch from '@/common/fetch/index';
 import config from '@/common/config';
-import WeChatError from './wechat.error';
 import { WeChatAssociateParams, WeChatLoginParams } from './wechat.type';
-import WechatTips from './wechat.tip';
+import WeChatTips from './wechat.tip';
 import WechatUser from '@/types/models/WechatUser';
 import User from '@/types/models/User';
 
@@ -37,7 +36,7 @@ export default class WeChatController {
       const { access_token, expires_in } = res.data;
       this.instance.redis.set(WECHAT_MINIPROGRAM_ACCESS_TOKEN, access_token, 'EX', expires_in);
     } catch (err) {
-      return Promise.reject(WeChatError.QUERY_ACCESS_TOKEN_ERROR);
+      return Promise.reject(WeChatTips.QUERY_ACCESS_TOKEN_ERROR);
     }
     return this.instance.redis.get(WECHAT_MINIPROGRAM_ACCESS_TOKEN);
   }
@@ -57,19 +56,24 @@ export default class WeChatController {
   }>, reply: FastifyReply) {
     try {
       const jwt = this.instance.jwt.decode(request.headers.authorization!) as any;
-      const { account, password } = request.body;
+      const { account, password, captcha } = request.body;
+      const sessionCaptcha = request.session.get('captcha');
+      console.log(captcha, sessionCaptcha);
+      if (captcha.toLowerCase() !== sessionCaptcha?.toLowerCase()) {
+        return errRes(400, WeChatTips.VERIFY_CAPTCHA_ERROR);
+      }
       const sqlInstance = await this.instance.mysql.getConnection();
       const sqlRes = await sqlInstance.query('SELECT * FROM `user` WHERE `account` = ? and `password` = ?', [account, encryptPassword(password)]);
       const existUser = sqlRes[0] as User[];
       if (!existUser.length) {
-        return errRes(400, WeChatError.NOT_FOUND_USER);
+        return errRes(400, WeChatTips.NOT_FOUND_USER);
       }
       const curUser = existUser[0];
       const { openid } = jwt;
       const sqlRes2 = await sqlInstance.query('SELECT * FROM `wechat_user` WHERE `openid` = ?', [openid]);
       const existWechatUser = sqlRes2[0] as WechatUser[];
       if (existWechatUser.length) {
-        return errRes(400, WeChatError.ALREADY_ASSOCIATED);
+        return errRes(400, WeChatTips.ALREADY_ASSOCIATED);
       }
       await sqlInstance.query('INSERT INTO `wechat_user` (`openid`, `account`) VALUES (?, ?)', [openid, curUser.account]);
       const token = this.instance.jwt.sign({
@@ -80,11 +84,20 @@ export default class WeChatController {
       return sucRes({
         openid,
         account,
-      }, WechatTips.ASSOCIATED_SUCCESS);
+      }, WeChatTips.ASSOCIATED_SUCCESS);
     } catch (e) {
       console.log(e);
-      return Promise.reject(WeChatError.ASSOCIATE_ERROR);
+      return Promise.reject(WeChatTips.ASSOCIATE_ERROR);
     }
+  }
+
+  @POST({ url: '/unAssociate' })
+  async unAssociateHandler(request: FastifyRequest, reply: FastifyReply) {
+    const jwt = this.instance.jwt.decode(request.headers.authorization!) as any;
+    const { openid } = jwt;
+    const sqlInstance = await this.instance.mysql.getConnection();
+    await sqlInstance.query('DELETE FROM `wechat_user` WHERE `openid` = ?', [openid]);
+    return sucRes(null, WeChatTips.UN_ASSOCIATED_SUCCESS);
   }
 
 
@@ -114,7 +127,7 @@ export default class WeChatController {
         return sucRes({
           openid,
           associated: false,
-        }, WechatTips.WECHAT_NOT_ASSOCIATED);
+        }, WeChatTips.WECHAT_NOT_ASSOCIATED);
       } else {
         const token = this.instance.jwt.sign({
           openid,
@@ -128,11 +141,11 @@ export default class WeChatController {
           openid,
           associated: true,
           user: curUser,
-        }, WechatTips.LOGIN_SUCCESS);
+        }, WeChatTips.LOGIN_SUCCESS);
       }
     } catch (err) {
       console.log(err);
-      return errRes(400, WeChatError.LOGIN_ERROR);
+      return errRes(400, WeChatTips.LOGIN_ERROR);
     }
   }
 
@@ -155,12 +168,12 @@ export default class WeChatController {
   async onRequestHandler(request: FastifyRequest, reply: FastifyReply) {
     if (!whiteList.includes(request.url)) {
       if (!request.headers.authorization) {
-        return errRes(400, WeChatError.NOT_FOUND_OPENID);
+        return errRes(400, WeChatTips.NOT_FOUND_OPENID);
       }
       try {
         this.instance.jwt.verify(request.headers.authorization);
       } catch (e) {
-        return errRes(400, WeChatError.AUTH_ERROR);
+        return errRes(400, WeChatTips.AUTH_ERROR);
       }
     }
   }

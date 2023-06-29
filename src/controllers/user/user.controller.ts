@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import { Controller, ErrorHandler, FastifyInstanceToken, GET, Hook, Inject, POST } from 'fastify-decorators';
-import UserError from './user.error';
 import { FastifyRequestError } from '@/types/global';
 import { LoginUserParams, RegisterUserParams } from './user.type';
 import UserTips from './user.tip';
@@ -18,15 +17,6 @@ export default class UserController {
   // 登录
   @POST({
     url: '/login', options: {
-      schema: {
-        body: {
-          type: 'object',
-          properties: {
-            userName: { type: 'string' },
-            password: { type: 'string' },
-          },
-        }
-      },
       config: {
         rateLimit: {
           max: 5,
@@ -39,7 +29,7 @@ export default class UserController {
     Body: LoginUserParams,
   }>, reply: FastifyReply) {
     if (!request.body) {
-      return errRes(400, UserError.LOGIN_USER_ERROR);
+      return errRes(400, UserTips.LOGIN_USER_ERROR);
     }
     const { account = "", password = "" } = request.body;
     try {
@@ -47,7 +37,7 @@ export default class UserController {
       const [rows, fields] = await sqlInstance.query<any[]>('SELECT * FROM `user` WHERE `account` = ? AND `password` = ?', [account, encryptPassword(password)]);
       sqlInstance.release();
       if (!rows.length) {
-        return errRes(400, UserError.LOGIN_USER_ERROR);
+        return errRes(400, UserTips.LOGIN_USER_ERROR);
       }
       const token = this.instance.jwt.sign({
         user: rows[0]
@@ -58,7 +48,7 @@ export default class UserController {
       }, UserTips.LOGIN_SUCCESS)
     } catch (err) {
       return Promise.reject({
-        code: UserError.LOGIN_USER_ERROR,
+        code: UserTips.LOGIN_USER_ERROR,
         err,
       });
     }
@@ -74,7 +64,7 @@ export default class UserController {
       return sucRes(rows);
     } catch (err) {
       return Promise.reject({
-        code: UserError.QUERY_USER_ERROR,
+        code: UserTips.QUERY_USER_ERROR,
         err,
       });
     }
@@ -94,9 +84,13 @@ export default class UserController {
   async registerHandler(request: FastifyRequest<{
     Body: RegisterUserParams
   }>, reply: FastifyReply) {
-    const { account, password } = request.body;
+    const { account, password, captcha } = request.body;
     if (!account || !password) {
-      return errRes(400, UserError.REGISTER_USER_ERROR);
+      return errRes(400, UserTips.REGISITER_USER_INFO_MISSING);
+    }
+    const sessionCaptcha = request.session.get('captcha');
+    if (captcha.toLowerCase() !== sessionCaptcha?.toLowerCase()) {
+      return errRes(400, UserTips.VERIFY_CAPTCHA_ERROR);
     }
     // 查询是否已存在相同用户名
     try {
@@ -104,11 +98,11 @@ export default class UserController {
       const [rows, fields] = await sqlInstance.query<any[]>('SELECT * FROM `user` WHERE `account` = ?', [account]);
       sqlInstance.release();
       if (rows.length) {
-        return errRes(400, UserError.USER_NAME_DUPLICATE);
+        return errRes(400, UserTips.USER_NAME_DUPLICATE);
       }
     } catch (err) {
       return Promise.reject({
-        code: UserError.REGISTER_USER_ERROR,
+        code: UserTips.REGISTER_USER_ERROR,
         err,
       });
     }
@@ -123,7 +117,7 @@ export default class UserController {
       }, UserTips.REGISTER_SUCCESS);
     } catch (err) {
       return Promise.reject({
-        code: UserError.REGISTER_USER_ERROR,
+        code: UserTips.REGISTER_USER_ERROR,
         err,
       });
     }
@@ -148,19 +142,19 @@ export default class UserController {
     }
     const token = request.headers['authorization'];
     if (!token) {
-      reply.code(401).send(errRes(401, UserError.USER_NOT_LOGIN));
+      reply.code(401).send(errRes(401, UserTips.USER_NOT_LOGIN));
       return;
     }
     try {
       this.instance.jwt.verify(token);
     } catch (err) {
       console.error(err);
-      reply.code(401).send(errRes(401, UserError.USER_NOT_LOGIN));
+      reply.code(401).send(errRes(401, UserTips.USER_NOT_LOGIN));
     }
   }
 
   @ErrorHandler()
-  async handleQueryUserError(error: FastifyRequestError, request: FastifyRequest, reply: FastifyReply) {
+  async handleQueryUserTips(error: FastifyRequestError, request: FastifyRequest, reply: FastifyReply) {
     console.error(error);
     reply.send({
       code: 500,

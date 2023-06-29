@@ -6,4 +6,5 @@ export type WeChatLoginParams = {
 export type WeChatAssociateParams = {
   account: string
   password: string
+  captcha: string
 }
