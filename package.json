@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch ./src/index.ts"
+    "dev": "tsx ./src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,14 +22,22 @@
   },
   "dependencies": {
     "@fastify/cookie": "^8.3.0",
+    "@fastify/formbody": "^7.4.0",
     "@fastify/jwt": "^7.1.0",
     "@fastify/mysql": "^4.1.0",
     "@fastify/rate-limit": "^8.0.1",
     "@fastify/redis": "^6.1.1",
     "@fastify/secure-session": "^6.1.0",
+    "@prisma/client": "5.1.1",
+    "alipay-sdk": "^3.4.0",
     "axios": "^1.4.0",
+    "baidu-aip-sdk": "^4.16.13",
     "fastify": "^4.18.0",
     "fastify-decorators": "^3.15.0",
+    "fastify-prisma-client": "^6.0.0",
+    "image-size": "^1.0.2",
+    "nanoid": "^4.0.2",
+    "prisma": "^5.1.1",
     "svg-captcha": "^1.4.0"
   }
 }

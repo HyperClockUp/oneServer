@@ -1,13 +1,22 @@
 import UserTips from "@controllers/user/user.tip";
-import { errRes } from "@utils/index";
+import { errRes, validateWhiteList } from "@utils/index";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { Controller, ErrorHandler, FastifyInstanceToken, GET, Hook, Inject } from "fastify-decorators";
+import {
+  Controller,
+  ErrorHandler,
+  FastifyInstanceToken,
+  GET,
+  Hook,
+  Inject,
+} from "fastify-decorators";
 
 import { FastifyRequestError } from "@/types/global";
 
 const whiteList: string[] = ["/"];
 
-@Controller({ route: "/" })
+const ROUTER_PREFIX = "/";
+
+@Controller({ route: ROUTER_PREFIX })
 export default class HomeController {
   @Inject(FastifyInstanceToken)
   private instance!: FastifyInstance;
@@ -25,11 +34,10 @@ export default class HomeController {
     return `Hello ${data.user.userName}!`;
   }
 
-
   @Hook("onRequest")
   async onRequest(request: FastifyRequest, reply: FastifyReply) {
     console.log("onRequest", request.url);
-    if (whiteList.includes(request.url)) {
+    if (validateWhiteList(request.url, whiteList, ROUTER_PREFIX)) {
       return;
     }
     const token = request.headers["authorization"];
@@ -46,7 +54,11 @@ export default class HomeController {
   }
 
   @ErrorHandler()
-  async handleQueryUserTips(error: FastifyRequestError, request: FastifyRequest, reply: FastifyReply) {
+  async handleQueryUserTips(
+    error: FastifyRequestError,
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
     console.error(error);
     reply.send({
       code: 500,

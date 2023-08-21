@@ -21,6 +21,8 @@ enum WeChatTips {
   ALREADY_ASSOCIATED = "已存在关联账号",
   VERIFY_CAPTCHA_ERROR = "验证码验证失败",
   UN_ASSOCIATED_SUCCESS = "解除关联成功",
+  GOD_MODE_ANSWER_ERROR = "竟敢以凡人之躯比肩神明！",
+  GOD_MODE_ANSWER_SUCCESS = "whoisyourdady",
 }
 
 export default WeChatTips;

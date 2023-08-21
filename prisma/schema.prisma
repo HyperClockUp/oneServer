@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model announcement {
+  id       Int      @id @default(autoincrement())
+  detail   String?  @db.VarChar(100)
+  date     DateTime @default(now()) @db.Timestamp(0)
+  platform Int      @default(0)
+}
+
+model expire {
+  account     String      @unique(map: "account") @db.VarChar(100)
+  expire_time DateTime    @db.Timestamp(0)
+  machine_id  String      @db.VarChar(100)
+  type        expire_type @default(trial)
+  user        user        @relation(fields: [account], references: [account], onDelete: NoAction, onUpdate: NoAction, map: "expire_FK")
+}
+
+model goods {
+  id          BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  subject     String  @db.VarChar(100)
+  price       Int     @default(0) @db.UnsignedInt
+  description String? @db.VarChar(100)
+  order       order[]
+}
+
+model group {
+  id             Int              @id @default(autoincrement())
+  groupId        String           @db.VarChar(100)
+  groupName      String           @db.VarChar(100)
+  service_expire service_expire[] @ignore
+}
+
+model order {
+  id      String       @id @db.VarChar(100)
+  account String       @db.VarChar(100)
+  good    BigInt       @db.UnsignedBigInt
+  subject String       @db.VarChar(100)
+  amount  String       @db.VarChar(100)
+  date    DateTime     @default(now()) @db.Timestamp(0)
+  status  order_status @default(unpay)
+  goods   goods        @relation(fields: [good], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_FK")
+
+  @@index([good], map: "order_FK")
+}
+
+model recharge_card {
+  id          BigInt  @id @default(autoincrement())
+  rechargeNum String  @unique(map: "rechargeNum") @db.VarChar(100)
+  point       Int
+  used        Boolean @default(false)
+  usage       String  @db.VarChar(100)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model recharge_history {
+  id          Int      @default(autoincrement())
+  rechargeId  BigInt
+  rechargeNum String   @db.VarChar(100)
+  usedTime    DateTime @db.Timestamp(0)
+  user        Int
+
+  @@index([id], map: "recharge_history_FK")
+  @@ignore
+}
+
+model service {
+  id             Int              @id @default(autoincrement())
+  serviceName    String           @db.VarChar(100)
+  mark           String?          @db.VarChar(100)
+  service_expire service_expire[] @ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model service_expire {
+  id          Int
+  startTime   DateTime @db.Timestamp(0)
+  expiredTime DateTime @db.Timestamp(0)
+  reason      Int
+  service     service  @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "service_expire_FK")
+  group       group    @relation(fields: [id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "service_expire_FK_1")
+
+  @@index([id], map: "service_expire_FK_1")
+  @@ignore
+}
+
+model user {
+  account     String        @id @unique(map: "user_UN") @db.VarChar(100)
+  userName    String        @unique(map: "userName") @db.VarChar(100)
+  password    String        @db.VarChar(100)
+  date        DateTime      @default(now()) @db.Timestamp(0)
+  avatar      String?       @db.VarChar(100)
+  email       String?       @db.VarChar(100)
+  balance     Int           @default(0)
+  mobile      String?       @db.VarChar(100)
+  expire      expire?
+  wechat_user wechat_user[]
+}
+
+model wechat_user {
+  openid  String @id @db.VarChar(100)
+  account String @db.VarChar(100)
+  user    user   @relation(fields: [account], references: [account], onDelete: NoAction, onUpdate: NoAction, map: "wechat_user_FK")
+
+  @@unique([openid, account], map: "wechat_user_UN")
+  @@index([account], map: "wechat_user_FK")
+}
+
+enum expire_type {
+  trial
+  pay
+}
+
+enum order_status {
+  unpay
+  paid
+}
