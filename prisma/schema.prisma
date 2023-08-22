@@ -23,11 +23,14 @@ model expire {
 }
 
 model goods {
-  id          BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  subject     String  @db.VarChar(100)
-  price       Int     @default(0) @db.UnsignedInt
-  description String? @db.VarChar(100)
-  order       order[]
+  id            BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  subject       String          @db.VarChar(100)
+  price         Float           @default(0.5)
+  description   String?         @db.VarChar(100)
+  point         Int?            @default(0)
+  time          Int?            @default(0)
+  order         order[]
+  recharge_card recharge_card[]
 }
 
 model group {
@@ -44,30 +47,32 @@ model order {
   subject String       @db.VarChar(100)
   amount  String       @db.VarChar(100)
   date    DateTime     @default(now()) @db.Timestamp(0)
-  status  order_status @default(unpay)
+  status  order_status @default(unpaid)
   goods   goods        @relation(fields: [good], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_FK")
 
   @@index([good], map: "order_FK")
 }
 
 model recharge_card {
-  id          BigInt  @id @default(autoincrement())
-  rechargeNum String  @unique(map: "rechargeNum") @db.VarChar(100)
-  point       Int
-  used        Boolean @default(false)
-  usage       String  @db.VarChar(100)
+  id                 BigInt             @id @default(autoincrement())
+  recharge_series_no String             @unique(map: "rechargeNum") @db.VarChar(100)
+  good               BigInt             @db.UnsignedBigInt
+  used               Boolean            @default(false)
+  usage              String             @db.VarChar(100)
+  goods              goods              @relation(fields: [good], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recharge_card_FK")
+  recharge_history   recharge_history[]
+
+  @@index([good], map: "recharge_card_FK")
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model recharge_history {
-  id          Int      @default(autoincrement())
-  rechargeId  BigInt
-  rechargeNum String   @db.VarChar(100)
-  usedTime    DateTime @db.Timestamp(0)
-  user        Int
+  id                 Int           @id @default(autoincrement())
+  recharge_series_no String        @db.VarChar(100)
+  usedTime           DateTime      @default(now()) @db.Timestamp(0)
+  account            Int
+  recharge_card      recharge_card @relation(fields: [recharge_series_no], references: [recharge_series_no], onDelete: NoAction, onUpdate: NoAction, map: "recharge_history_no_FK")
 
-  @@index([id], map: "recharge_history_FK")
-  @@ignore
+  @@index([recharge_series_no], map: "recharge_history_no_FK")
 }
 
 model service {
@@ -118,6 +123,6 @@ enum expire_type {
 }
 
 enum order_status {
-  unpay
+  unpaid
   paid
 }

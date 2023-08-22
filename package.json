@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx ./src/index.ts"
+    "dev": "tsx ./src/index.ts",
+    "tools": "tsx ./src/tools/index.ts"
   },
   "keywords": [],
   "author": "",

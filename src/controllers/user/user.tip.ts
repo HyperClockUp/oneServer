@@ -12,6 +12,7 @@ enum UserTips {
   LOGIN_USER_ERROR = "登录失败",
   // 用户暂未登录
   USER_NOT_LOGIN = "用户暂未登录",
+  USER_NOT_FOUND = "用户不存在",
   USER_ACCOUNT_DUPLICATE = "用户账号重复",
   VERIFY_CAPTCHA_ERROR = "验证码验证失败",
   VERIFY_TOKEN_SUCCESS = "token验证成功",
@@ -21,6 +22,9 @@ enum UserTips {
   ORDER_NOT_PAID = "订单未支付",
   ORDER_PAID = "订单已支付",
   ORDER_MISTAKE = "订单错误",
+  GOOD_NOT_FOUND = "商品不存在",
+  CARD_NOT_FOUND = "充值卡不存在",
+  CARD_HAS_USED = "充值卡已使用",
 }
 
 export default UserTips;

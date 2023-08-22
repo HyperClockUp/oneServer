@@ -1,6 +1,6 @@
 // 充值参数
 export type RechargeParams = {
-  rechargeId: string;
+  no: string;
 }
 
 // 查询参数

@@ -18,7 +18,7 @@ const alipaySdk = new AlipaySdk({
 // 产生订单二维码链接
 export const generateOrderQrCode = async (
   subject: string,
-  totalAmount: string,
+  totalAmount: number,
   outTradeNo = generateOrderNo()
 ) => {
   const result = await alipaySdk.exec("alipay.trade.precreate", {

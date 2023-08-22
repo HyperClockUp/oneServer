@@ -1,6 +1,6 @@
 import { CookieSerializeOptions } from "@fastify/cookie";
 import crypto from "crypto";
-import { FastifyReply } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 import config from "../config";
 import axios from "axios";
 import { customAlphabet, nanoid } from "nanoid";
