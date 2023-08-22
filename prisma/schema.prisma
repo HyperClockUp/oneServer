@@ -69,9 +69,11 @@ model recharge_history {
   id                 Int           @id @default(autoincrement())
   recharge_series_no String        @db.VarChar(100)
   usedTime           DateTime      @default(now()) @db.Timestamp(0)
-  account            Int
+  account            String        @db.VarChar(100)
+  user               user          @relation(fields: [account], references: [account], onDelete: NoAction, onUpdate: NoAction, map: "recharge_history_FK")
   recharge_card      recharge_card @relation(fields: [recharge_series_no], references: [recharge_series_no], onDelete: NoAction, onUpdate: NoAction, map: "recharge_history_no_FK")
 
+  @@index([account], map: "recharge_history_FK")
   @@index([recharge_series_no], map: "recharge_history_no_FK")
 }
 
@@ -96,16 +98,17 @@ model service_expire {
 }
 
 model user {
-  account     String        @id @unique(map: "user_UN") @db.VarChar(100)
-  userName    String        @unique(map: "userName") @db.VarChar(100)
-  password    String        @db.VarChar(100)
-  date        DateTime      @default(now()) @db.Timestamp(0)
-  avatar      String?       @db.VarChar(100)
-  email       String?       @db.VarChar(100)
-  balance     Int           @default(0)
-  mobile      String?       @db.VarChar(100)
-  expire      expire?
-  wechat_user wechat_user[]
+  account          String             @id @unique(map: "user_UN") @db.VarChar(100)
+  userName         String             @unique(map: "userName") @db.VarChar(100)
+  password         String             @db.VarChar(100)
+  date             DateTime           @default(now()) @db.Timestamp(0)
+  avatar           String?            @db.VarChar(100)
+  email            String?            @db.VarChar(100)
+  balance          Int                @default(0)
+  mobile           String?            @db.VarChar(100)
+  expire           expire?
+  recharge_history recharge_history[]
+  wechat_user      wechat_user[]
 }
 
 model wechat_user {
