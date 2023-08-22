@@ -107,8 +107,23 @@ export default class UserController {
     }
     try {
       const jwt = this.instance.jwt.decode(token) as any;
-      console.log(jwt);
-      return sucRes(jwt.user);
+      const account = jwt.user.account;
+      // 除去敏感字段
+      const user = await this.instance.prisma.user.findUnique({
+        where: {
+          account,
+        },
+        select: {
+          account: true,
+          userName: true,
+          date: true,
+          email: true,
+          avatar: true,
+          mobile: true,
+          balance: true,
+        },
+      });
+      return sucRes(user);
     } catch (err) {
       console.error(err);
       return errRes(401, UserTips.USER_NOT_LOGIN);
@@ -150,7 +165,7 @@ export default class UserController {
           account,
         },
       });
-      console.log(existUser)
+      console.log(existUser);
       if (existUser) {
         return errRes(400, UserTips.USER_ACCOUNT_DUPLICATE);
       }
