@@ -148,13 +148,11 @@ export default class UserController {
     }>,
     reply: FastifyReply
   ) {
-    console.log(request.body);
     const { account, password, captcha } = request.body;
     if (!account || !password) {
       return errRes(400, UserTips.REGISITER_USER_INFO_MISSING);
     }
     const sessionCaptcha = request.session.get("captcha");
-    console.log(captcha, sessionCaptcha);
     if (captcha.toLowerCase() !== sessionCaptcha?.toLowerCase()) {
       return errRes(400, UserTips.VERIFY_CAPTCHA_ERROR);
     }
@@ -165,7 +163,6 @@ export default class UserController {
           account,
         },
       });
-      console.log(existUser);
       if (existUser) {
         return errRes(400, UserTips.USER_ACCOUNT_DUPLICATE);
       }
@@ -224,19 +221,6 @@ export default class UserController {
       return errRes(401, UserTips.USER_NOT_LOGIN);
     }
     return sucRes(null, UserTips.VERIFY_TOKEN_SUCCESS);
-  }
-
-  @POST({ url: "/info" })
-  async infoHandler(request: FastifyRequest, reply: FastifyReply) {
-    const token = request.headers["authorization"]!;
-    try {
-      const jwt = this.instance.jwt.decode(token) as any;
-      console.log(jwt);
-      return sucRes(jwt.user);
-    } catch (err) {
-      console.error(err);
-      return errRes(401, UserTips.USER_NOT_LOGIN);
-    }
   }
 
   @Hook("onRequest")
