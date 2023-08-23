@@ -23,7 +23,7 @@ model expire {
 }
 
 model goods {
-  id            BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  id            Int             @id @default(autoincrement())
   subject       String          @db.VarChar(100)
   price         Float           @default(0.5)
   description   String?         @db.VarChar(100)
@@ -43,7 +43,7 @@ model group {
 model order {
   id      String       @id @db.VarChar(100)
   account String       @db.VarChar(100)
-  good    BigInt       @db.UnsignedBigInt
+  good    Int
   subject String       @db.VarChar(100)
   amount  String       @db.VarChar(100)
   date    DateTime     @default(now()) @db.Timestamp(0)
@@ -54,9 +54,9 @@ model order {
 }
 
 model recharge_card {
-  id                 BigInt             @id @default(autoincrement())
+  id                 Int                @id @default(autoincrement())
   recharge_series_no String             @unique(map: "rechargeNum") @db.VarChar(100)
-  good               BigInt             @db.UnsignedBigInt
+  good               Int
   used               Boolean            @default(false)
   usage              String             @db.VarChar(100)
   goods              goods              @relation(fields: [good], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recharge_card_FK")
