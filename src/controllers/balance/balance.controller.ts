@@ -218,7 +218,7 @@ export default class BalanceController {
       data: {
         machine_id: machineId.toString(),
         account: data.user.account,
-        expire_time: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        expire_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         type: "trial",
       },
     });

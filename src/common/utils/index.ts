@@ -143,3 +143,13 @@ export const generateRechargeSecret = (count = 10) => {
   }
   return Array.from({ length: count }, gen);
 }
+
+/**
+ * 生成组队ID
+ * @returns 
+ */
+export const generateTeamId = () => {
+  const ID_LENGTH = 8;
+  const customNanoId = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", ID_LENGTH);
+  return customNanoId();
+};

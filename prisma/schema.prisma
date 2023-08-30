@@ -8,15 +8,15 @@ datasource db {
 }
 
 model announcement {
-  id       Int      @id @default(autoincrement())
-  detail   String?  @db.VarChar(100)
-  date     DateTime @default(now()) @db.Timestamp(0)
-  platform Int      @default(0)
+  id      Int      @id @default(autoincrement())
+  detail  String?  @db.VarChar(100)
+  date    DateTime @default(now()) @db.DateTime(0)
+  service String   @db.VarChar(100)
 }
 
 model expire {
   account     String      @unique(map: "account") @db.VarChar(100)
-  expire_time DateTime    @db.Timestamp(0)
+  expire_time DateTime    @db.DateTime(0)
   machine_id  String      @db.VarChar(100)
   type        expire_type @default(trial)
   user        user        @relation(fields: [account], references: [account], onDelete: NoAction, onUpdate: NoAction, map: "expire_FK")
@@ -109,6 +109,13 @@ model user {
   expire           expire?
   recharge_history recharge_history[]
   wechat_user      wechat_user[]
+}
+
+model version {
+  id          Int     @id @default(autoincrement())
+  service     String  @db.VarChar(100)
+  version     String? @db.VarChar(100)
+  description String  @default("版本更新") @db.VarChar(100)
 }
 
 model wechat_user {

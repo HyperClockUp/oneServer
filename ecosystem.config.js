@@ -1,7 +1,8 @@
 module.exports = {
   apps: [{
     name: "one-server",
-    script: 'yarn',
+    script: 'npm run',
+    cwd: '/home/ubuntu/projects/oneServer',
     args: 'dev',
     instances: 1,
     autorestart: true,

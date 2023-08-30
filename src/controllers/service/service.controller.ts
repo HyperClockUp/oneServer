@@ -10,7 +10,7 @@ import {
 } from "fastify-decorators";
 import { FastifyRequestError } from "@/types/global";
 import axios, { Canceler } from "axios";
-import { checkTextByBaiDu, sucRes, translateByBaiDu } from "@/common/utils";
+import { checkTextByBaiDu, generateTeamId, sucRes, translateByBaiDu } from "@/common/utils";
 import imageSize from "image-size";
 import { nanoid } from "nanoid";
 import fs from "fs";
@@ -176,6 +176,124 @@ export default class ServiceController {
       image: res.data.images[0],
     });
   }
+
+  @GET({
+    url: "/checkUpdate",
+  })
+  async checkUpdateHandler(
+    request: FastifyRequest<{
+      Querystring: {
+        service: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    const { service } = request.query;
+    const serviceVersion = await this.instance.prisma.version.findFirst({
+      where: {
+        service,
+      },
+    });
+    return sucRes(serviceVersion);
+  }
+
+  @GET({
+    url: "/checkAnnouncement",
+  })
+  async checkAnnouncementHandler(
+    request: FastifyRequest<{
+      Querystring: {
+        service: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    const { service } = request.query;
+    const serviceAnnouncement = await this.instance.prisma.announcement.findFirst({
+      where: {
+        service,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+    return sucRes(serviceAnnouncement);
+  }
+
+  @POST({
+    url: "/buildTeam",
+  })
+  async buildTeamHandler(
+    request: FastifyRequest<{
+      Body: {
+        teamName: string;
+        teamMembers: string[];
+        teamType: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    const { teamName, teamMembers } = request.body;
+    const EXPIRE_TIME = 60 * 20;
+    const teamId = generateTeamId();
+    this.instance.redis.sadd(`team:${teamId}`, teamMembers);
+    this.instance.redis.sadd('teamList', teamId);
+    this.instance.redis.expire(`team:${teamId}`, EXPIRE_TIME);
+  }
+
+  @POST({
+    url: "/cancelTeam",
+  })
+  async cancelTeamHandler(
+    request: FastifyRequest<{
+      Body: {
+        teamId: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+  }
+
+  @POST({
+    url: "/joinTeam",
+  })
+  async joinTeamHandler(
+    request: FastifyRequest<{
+      Body: {
+        teamId: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+  }
+
+  @POST({
+    url: "/updateTeam",
+  })
+  async updateTeamHandler(
+    request: FastifyRequest<{
+      Body: {
+        teamId: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+  }
+
+  @POST({
+    url: "/teamHeartbeat",
+  })
+  async teamHeartbeatHandler(
+    request: FastifyRequest<{
+      Body: {
+        teamId: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    this.instance.redis.hs
+  }
+
 
   @ErrorHandler()
   async handleQueryUserError(

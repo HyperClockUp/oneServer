@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx ./src/index.ts",
+    "start": "pm2 start --env production",
     "tools": "tsx ./src/tools/index.ts"
   },
   "keywords": [],
