@@ -9,7 +9,11 @@ import {
   POST,
 } from "fastify-decorators";
 import { FastifyRequestError } from "@/types/global";
-import { LoginUserParams, RegisterUserParams } from "./user.type";
+import {
+  LoginUserParams,
+  RegisterUserParams,
+  VerifyTokenParams,
+} from "./user.type";
 import UserTips from "./user.tip";
 import {
   encryptPassword,
@@ -209,13 +213,17 @@ export default class UserController {
   ) {}
 
   @POST({ url: "/verifyToken" })
-  async verifyTokenHandler(request: FastifyRequest, reply: FastifyReply) {
-    const token = request.headers["authorization"];
+  async verifyTokenHandler(
+    request: FastifyRequest<{
+      Body: VerifyTokenParams;
+    }>,
+    reply: FastifyReply
+  ) {
+    const token = request.body.token;
     if (!token) {
-      return errRes(401, UserTips.USER_NOT_LOGIN);
+      return errRes(401, UserTips.VERIFY_TOKEN_ERROR);
     }
     try {
-      this.instance.jwt.verify(token);
       const jwt = this.instance.jwt.decode(token) as any;
       const account = jwt.user.account;
       return sucRes(
@@ -227,7 +235,7 @@ export default class UserController {
       );
     } catch (err) {
       console.error(err);
-      return errRes(401, UserTips.USER_NOT_LOGIN);
+      return errRes(401, UserTips.VERIFY_TOKEN_ERROR);
     }
   }
 

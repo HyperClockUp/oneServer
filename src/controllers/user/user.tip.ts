@@ -16,6 +16,7 @@ enum UserTips {
   USER_ACCOUNT_DUPLICATE = "用户账号重复",
   VERIFY_CAPTCHA_ERROR = "验证码验证失败",
   VERIFY_TOKEN_SUCCESS = "token验证成功",
+  VERIFY_TOKEN_ERROR = "token验证失败",
   MACHINE_TRIALED_ERROR = "机器已试用",
   USER_TRIALED_ERROR = "用户已试用",
   ORDER_NOT_FOUND = "订单不存在",
