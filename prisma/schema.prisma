@@ -9,9 +9,9 @@ datasource db {
 
 model announcement {
   id      Int      @id @default(autoincrement())
+  service String   @db.VarChar(100)
   detail  String?  @db.VarChar(100)
   date    DateTime @default(now()) @db.DateTime(0)
-  service String   @db.VarChar(100)
 }
 
 model expire {

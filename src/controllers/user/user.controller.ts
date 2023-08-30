@@ -20,7 +20,7 @@ import {
   validateWhiteList,
 } from "@utils/index";
 
-const whiteList = ["/login", "/register"];
+const whiteList = ["/login", "/register", "/verifyToken"];
 
 const ROUTER_PREFIX = "/user";
 
@@ -216,11 +216,19 @@ export default class UserController {
     }
     try {
       this.instance.jwt.verify(token);
+      const jwt = this.instance.jwt.decode(token) as any;
+      const account = jwt.user.account;
+      return sucRes(
+        {
+          account,
+          token,
+        },
+        UserTips.VERIFY_TOKEN_SUCCESS
+      );
     } catch (err) {
       console.error(err);
       return errRes(401, UserTips.USER_NOT_LOGIN);
     }
-    return sucRes(null, UserTips.VERIFY_TOKEN_SUCCESS);
   }
 
   @Hook("onRequest")
