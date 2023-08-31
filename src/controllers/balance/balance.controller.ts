@@ -214,11 +214,17 @@ export default class BalanceController {
     if (user) {
       return errRes(400, UserTips.USER_TRIALED_ERROR);
     }
+
+    // 如果今天在2023-9-4之前，把过期时间设置为2023-9-4，否则设置为三天后
+    const expireTime =
+      new Date() < new Date("2023-9-3")
+        ? new Date("2023-9-3")
+        : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
     const expire = await this.instance.prisma.expire.create({
       data: {
         machine_id: machineId.toString(),
         account: data.user.account,
-        expire_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expire_time: expireTime,
         type: "trial",
       },
     });
