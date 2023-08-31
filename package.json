@@ -34,6 +34,7 @@
     "alipay-sdk": "^3.4.0",
     "axios": "^1.4.0",
     "baidu-aip-sdk": "^4.16.13",
+    "dayjs": "^1.11.9",
     "fastify": "^4.18.0",
     "fastify-decorators": "^3.15.0",
     "fastify-prisma-client": "^6.0.0",

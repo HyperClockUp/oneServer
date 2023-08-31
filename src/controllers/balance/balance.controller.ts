@@ -20,6 +20,7 @@ import {
 } from "@/common/utils";
 import { FastifyRequestError } from "@/types/global";
 import { generateOrderQrCode } from "@/common/alipay";
+import dayjs from "dayjs";
 
 const whiteList: string[] = ["", "/alipayNotify", "/queryGoods"];
 
@@ -215,11 +216,8 @@ export default class BalanceController {
       return errRes(400, UserTips.USER_TRIALED_ERROR);
     }
 
-    // 如果今天在2023-9-4之前，把过期时间设置为2023-9-4，否则设置为三天后
-    const expireTime =
-      new Date() < new Date("2023-9-3")
-        ? new Date("2023-9-3")
-        : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    // 体验时间为三天，过期时间为三天后的零点
+    const expireTime = dayjs().endOf("day").add(3, "day").toDate();
     const expire = await this.instance.prisma.expire.create({
       data: {
         machine_id: machineId.toString(),
