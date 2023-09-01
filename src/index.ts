@@ -11,6 +11,7 @@ import fastifyFormbody from "@fastify/formbody";
 import fs from "fs";
 import path from "path";
 import config from "@config/index";
+import "./webSockets/index";
 
 const server = Fastify({
   logger: true,
