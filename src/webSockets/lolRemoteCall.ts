@@ -7,6 +7,12 @@ enum RemoteCallMessageType {
   QUERY_SUMMONER_MATCH_HISTORY_BY_NAME = "QUERY_SUMMONER_MATCH_HISTORY_BY_NAME",
   QUERY_SUMMONER_MATCH_HISTORY_BY_NAME_ACK = "QUERY_SUMMONER_MATCH_HISTORY_ACK",
   QUERY_SUMMONER_MATCH_HISTORY_BY_NAME_RESULT = "QUERY_SUMMONER_MATCH_HISTORY_BY_NAME",
+
+  QUERY_GAME_DETAIL_BY_GAME_ID = 'QUERY_GAME_DETAIL_BY_GAME_ID',
+  QUERY_GAME_DETAIL_BY_GAME_ID_ACK = 'QUERY_GAME_DETAIL_BY_GAME_ID_ACK',
+  QUERY_GAME_DETAIL_BY_GAME_ID_RESULT = 'QUERY_GAME_DETAIL_BY_GAME_ID_RESULT',
+  
+  REMOTE_EXECUTE = "REMOTE_EXECUTE",
   MESSAGE = "MESSAGE",
 }
 
@@ -30,8 +36,21 @@ const arrayBuffer2Msg = (buffer: RawData): RemoteCallMessage => {
   return JSON.parse(buffer.toString());
 };
 
+const send = (socket: ws, msg: RemoteCallMessage) => {
+  socket.send(msg2Buffer(msg));
+};
+
 lolWebSocketServer.on("connection", (socket) => {
   socket.on("open", () => {});
+
+  socket.on("close", () => {
+    lolRegionRecord.forEach((sockets) => {
+      const index = sockets.indexOf(socket);
+      if (index !== -1) {
+        sockets.splice(index, 1);
+      }
+    });
+  });
 
   socket.on("message", (strMsg) => {
     try {
@@ -65,10 +84,6 @@ lolWebSocketServer.on("connection", (socket) => {
   });
 });
 
-const send = (socket: ws, msg: RemoteCallMessage) => {
-  socket.send(msg2Buffer(msg));
-};
-
 const broadcast = (msg: RemoteCallMessage) => {
   lolWebSocketServer.clients.forEach((client) => {
     send(client, msg);
@@ -86,10 +101,12 @@ class RemoteCallPromise {
   _resolve: any;
   _reject: any;
   _promise: Promise<[RemoteCallMessage, ws]>;
-  constructor(msg: RemoteCallMessage, socket?: ws) {
+  constructor(msg: RemoteCallMessage, sockets: ws[] = []) {
     this._promise = new Promise((resolve, reject) => {
-      if (socket) {
-        send(socket, msg);
+      if (sockets.length) {
+        sockets.forEach((s) => {
+          send(s, msg);
+        });
       } else {
         broadcast(msg);
       }
@@ -105,9 +122,9 @@ class RemoteCallPromise {
   }
 }
 
-const remoteCall = async (msg: RemoteCallMessage, socket?: ws) => {
+const remoteCall = async (msg: RemoteCallMessage, sockets: ws[] = []) => {
   msg.taskId = remoteCallTaskId();
-  const remoteTaskPromise = new RemoteCallPromise(msg, socket);
+  const remoteTaskPromise = new RemoteCallPromise(msg, sockets);
   remoteCallTaskPool.set(msg.taskId, remoteTaskPromise);
   return remoteTaskPromise._promise;
 };
@@ -115,21 +132,11 @@ const remoteCall = async (msg: RemoteCallMessage, socket?: ws) => {
 // setInterval(async () => {
 //   try {
 //     const [data, socket] = await remoteCall({
-//       type: RemoteCallMessageType.QUERY_SUMMONER_MATCH_HISTORY_BY_NAME,
-//       data: null,
-//     });
-//     const [executeRes] = await remoteCall(
-//       {
-//         type: RemoteCallMessageType.QUERY_SUMMONER_MATCH_HISTORY_BY_NAME_ACK,
-//         data: {
-//           summonerName: "18岁打野不想打职",
-//           page: 1,
-//           pageSize: 10,
-//         },
+//       type: RemoteCallMessageType.REMOTE_EXECUTE,
+//       data: {
+//         code: "console.log(1)",
 //       },
-//       socket
-//     );
-//     console.log(JSON.stringify(executeRes, null, 2));
+//     });
 //   } catch (e) {
 //     console.log(e);
 //   }
@@ -139,4 +146,11 @@ lolWebSocketServer.on("listening", () => {
   console.log("listening");
 });
 
-export default lolWebSocketServer;
+export default {
+  remoteCall,
+  RemoteCallMessageType,
+  lolWebSocketServer,
+  send,
+  broadcast,
+  lolRegionRecord,
+};

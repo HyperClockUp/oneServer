@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@fastify/cookie": "^8.3.0",
+    "@fastify/cors": "^8.3.0",
     "@fastify/formbody": "^7.4.0",
     "@fastify/jwt": "^7.1.0",
     "@fastify/mysql": "^4.1.0",

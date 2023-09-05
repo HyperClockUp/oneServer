@@ -10,13 +10,29 @@ import {
 } from "fastify-decorators";
 import { FastifyRequestError } from "@/types/global";
 import axios, { Canceler } from "axios";
-import { checkTextByBaiDu, generateTeamId, sucRes, translateByBaiDu } from "@/common/utils";
+import {
+  checkTextByBaiDu,
+  errRes,
+  generateTeamId,
+  sucRes,
+  translateByBaiDu,
+  validateWhiteList,
+} from "@/common/utils";
 import imageSize from "image-size";
 import { nanoid } from "nanoid";
 import fs from "fs";
 import path from "path";
+import lolRemoteCall from "@/webSockets/lolRemoteCall";
+import UserTips from "../user/user.tip";
 
-const whiteList = ["/login", "/register"];
+const whiteList = [
+  "/login",
+  "/register",
+  "/lol/queryOnlineRegions",
+  "/lol/queryOnlineNum",
+  "/lol/queryMatchHistory",
+  "/lol/queryGameDetail",
+];
 
 // 存放任务
 const taskList = [] as any[];
@@ -70,7 +86,8 @@ const interruptSDImage = () => {
   return axios.post(url);
 };
 
-@Controller({ route: "/service" })
+const ROUTER_PREFIX = "/service";
+@Controller({ route: ROUTER_PREFIX })
 export default class ServiceController {
   @Inject(FastifyInstanceToken)
   private instance!: FastifyInstance;
@@ -209,14 +226,15 @@ export default class ServiceController {
     reply: FastifyReply
   ) {
     const { service } = request.query;
-    const serviceAnnouncement = await this.instance.prisma.announcement.findFirst({
-      where: {
-        service,
-      },
-      orderBy: {
-        date: "desc",
-      },
-    });
+    const serviceAnnouncement =
+      await this.instance.prisma.announcement.findFirst({
+        where: {
+          service,
+        },
+        orderBy: {
+          date: "desc",
+        },
+      });
     return sucRes(serviceAnnouncement);
   }
 
@@ -237,7 +255,7 @@ export default class ServiceController {
     const EXPIRE_TIME = 60 * 20;
     const teamId = generateTeamId();
     this.instance.redis.sadd(`team:${teamId}`, teamMembers);
-    this.instance.redis.sadd('teamList', teamId);
+    this.instance.redis.sadd("teamList", teamId);
     this.instance.redis.expire(`team:${teamId}`, EXPIRE_TIME);
   }
 
@@ -251,8 +269,7 @@ export default class ServiceController {
       };
     }>,
     reply: FastifyReply
-  ) {
-  }
+  ) {}
 
   @POST({
     url: "/joinTeam",
@@ -264,8 +281,7 @@ export default class ServiceController {
       };
     }>,
     reply: FastifyReply
-  ) {
-  }
+  ) {}
 
   @POST({
     url: "/updateTeam",
@@ -277,8 +293,7 @@ export default class ServiceController {
       };
     }>,
     reply: FastifyReply
-  ) {
-  }
+  ) {}
 
   @POST({
     url: "/teamHeartbeat",
@@ -291,9 +306,133 @@ export default class ServiceController {
     }>,
     reply: FastifyReply
   ) {
-    this.instance.redis.hs
+    this.instance.redis.hs;
   }
 
+  @GET({
+    url: "/lol/queryMatchHistory",
+  })
+  async queryRemoteHandler(
+    request: FastifyRequest<{
+      Querystring: {
+        region: string;
+        summonerName: string;
+        page: number;
+        pageSize: number;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    const { region, summonerName, page, pageSize } = request.query;
+    const allRegionSocket = lolRemoteCall.lolRegionRecord.get(region);
+    if (!allRegionSocket?.length) {
+      return errRes(500, UserTips.NO_AVAILABLE_REMOTE_USER);
+    }
+    try {
+      const [task, socket] = await lolRemoteCall.remoteCall({
+        type: lolRemoteCall.RemoteCallMessageType
+          .QUERY_SUMMONER_MATCH_HISTORY_BY_NAME,
+        data: null,
+      });
+      const [msg, skt] = await lolRemoteCall.remoteCall(
+        {
+          type: lolRemoteCall.RemoteCallMessageType
+            .QUERY_SUMMONER_MATCH_HISTORY_BY_NAME_ACK,
+          data: {
+            summonerName,
+            page: 1,
+            pageSize: 10,
+          },
+        },
+        socket ? [socket] : []
+      );
+      return sucRes(msg.data);
+    } catch (error) {
+      console.log(error);
+      return errRes(500, UserTips.QUERY_REMOTE_MATCH_HISTORY_ERROR);
+    }
+  }
+
+  @GET({
+    url: "/lol/queryGameDetail",
+  })
+  async queryGameDetailHandler(
+    request: FastifyRequest<{
+      Querystring: {
+        region: string;
+        gameId: string;
+      };
+    }>,
+    reply: FastifyReply
+  ) {
+    const { region, gameId } = request.query;
+    const allRegionSocket = lolRemoteCall.lolRegionRecord.get(region);
+    if (!allRegionSocket?.length) {
+      return errRes(500, UserTips.NO_AVAILABLE_REMOTE_USER);
+    }
+    try {
+      const [task, socket] = await lolRemoteCall.remoteCall({
+        type: lolRemoteCall.RemoteCallMessageType.QUERY_GAME_DETAIL_BY_GAME_ID,
+        data: null,
+      });
+      const [msg, skt] = await lolRemoteCall.remoteCall(
+        {
+          type: lolRemoteCall.RemoteCallMessageType
+            .QUERY_GAME_DETAIL_BY_GAME_ID_ACK,
+          data: {
+            gameId,
+          },
+        },
+        socket ? [socket] : []
+      );
+      return sucRes(msg.data);
+    } catch (error) {
+      console.log(error);
+      return errRes(500, UserTips.QUERY_REMOTE_GAME_DETAIL_ERROR);
+    }
+  }
+
+  @GET({
+    url: "/lol/queryOnlineRegions",
+  })
+  async queryOnlineRegionsHandler(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ) {
+    return sucRes([...lolRemoteCall.lolRegionRecord.keys()]);
+  }
+
+  @GET({
+    url: "/lol/queryOnlineNum",
+  })
+  async queryOnlineNumHandler(request: FastifyRequest, reply: FastifyReply) {
+    const queryResult: Record<string, number> = {};
+    for (const [key, value] of lolRemoteCall.lolRegionRecord.entries()) {
+      queryResult[key] = value.length;
+    }
+    return sucRes(queryResult);
+  }
+
+  @Hook("onRequest")
+  async onRequest(request: FastifyRequest, reply: FastifyReply) {
+    console.log("onRequest", request.url);
+    if (validateWhiteList(request.url, whiteList, ROUTER_PREFIX)) {
+      console.log("white", request.url);
+      return;
+    }
+    console.log("not white", request.url);
+    const token = request.headers["authorization"];
+    if (!token) {
+      reply.code(401).send(errRes(401, UserTips.USER_NOT_LOGIN));
+      return;
+    }
+    try {
+      this.instance.jwt.verify(token);
+    } catch (err) {
+      console.error(err);
+      reply.code(401).send(errRes(401, UserTips.USER_NOT_LOGIN));
+    }
+  }
 
   @ErrorHandler()
   async handleQueryUserError(

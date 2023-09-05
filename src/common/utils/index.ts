@@ -53,7 +53,7 @@ export const encryptPassword = (password: string) => {
  */
 export const validateWhiteList = (path: string, whiteList: string[], ROUTER_PREFIX = "") => {
   return whiteList.some((item) => {
-    return path === ROUTER_PREFIX + item;
+    return path.startsWith(ROUTER_PREFIX + item);
   });
 };
 

@@ -8,10 +8,11 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySecureSession from "@fastify/secure-session";
 import fastifyPrismaClient from "fastify-prisma-client";
 import fastifyFormbody from "@fastify/formbody";
+import fastifyCors from '@fastify/cors';
 import fs from "fs";
 import path from "path";
 import config from "@config/index";
-import "./webSockets/index";
+import "./webSockets/lolRemoteCall";
 
 const server = Fastify({
   logger: true,
@@ -46,6 +47,13 @@ const initServer = async () => {
     max: 100,
     timeWindow: "1 minute",
   });
+
+  // register fastify-cors
+  await server.register(fastifyCors, {
+    origin: true,
+    credentials: true,
+  });
+
 
   // register fastify-secure-session
   await server.register(fastifySecureSession, {

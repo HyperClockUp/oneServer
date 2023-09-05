@@ -26,6 +26,9 @@ enum UserTips {
   GOOD_NOT_FOUND = "商品不存在",
   CARD_NOT_FOUND = "充值卡不存在",
   CARD_HAS_USED = "充值卡已使用",
+  NO_AVAILABLE_REMOTE_USER = "没有可用的远程用户",
+  QUERY_REMOTE_MATCH_HISTORY_ERROR = "查询远程用户比赛历史失败",
+  QUERY_REMOTE_GAME_DETAIL_ERROR = "查询远程用户比赛详情失败",
 }
 
 export default UserTips;
